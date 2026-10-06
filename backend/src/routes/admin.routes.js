@@ -2,6 +2,7 @@ import express from "express";
 
 import {
   getAdminDashboard,
+  getPendingProducts,
   approveProduct,
   rejectProduct,
 } from "../controllers/admin.controller.js";
@@ -16,6 +17,13 @@ router.get(
   protect,
   adminOnly,
   getAdminDashboard
+);
+
+router.get(
+  "/products/pending",
+  protect,
+  adminOnly,
+  getPendingProducts
 );
 
 router.patch(

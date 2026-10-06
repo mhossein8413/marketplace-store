@@ -1,6 +1,7 @@
 import Product from "../models/Product.js";
 import User from "../models/User.js";
 import Order from "../models/Order.js";
+import "../models/Category.js";
 
 export const getAdminDashboard = async (req, res) => {
   try {
@@ -105,6 +106,26 @@ export const rejectProduct = async (req, res) => {
     });
   } catch (error) {
     return res.status(400).json({
+      message: error.message,
+    });
+  }
+};
+
+export const getPendingProducts = async (req, res) => {
+  try {
+    const products = await Product.find({
+      status: "pending",
+    })
+      .populate("seller", "name email")
+      .populate("category", "name slug")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      count: products.length,
+      products,
+    });
+  } catch (error) {
+    return res.status(500).json({
       message: error.message,
     });
   }
