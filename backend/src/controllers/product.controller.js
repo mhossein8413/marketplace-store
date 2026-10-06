@@ -170,3 +170,22 @@ export const deleteProduct = async (req, res) => {
     });
   }
 };
+
+export const getMyProducts = async (req, res) => {
+  try {
+    const products = await Product.find({
+      seller: req.user.userId,
+    })
+      .populate("category", "name slug")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      count: products.length,
+      products,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+};  
