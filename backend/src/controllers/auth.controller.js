@@ -1,6 +1,7 @@
 import {
   registerUser,
   loginUser,
+  getCurrentUser,
 } from "../services/auth.service.js";
 
 export const register = async (req, res) => {
@@ -48,6 +49,22 @@ export const login = async (req, res) => {
     return res.status(200).json(result);
   } catch (error) {
     return res.status(401).json({
+      message: error.message,
+    });
+  }
+};
+
+export const me = async (req, res) => {
+  try {
+    const user = await getCurrentUser(
+      req.user.userId
+    );
+
+    return res.status(200).json({
+      user,
+    });
+  } catch (error) {
+    return res.status(404).json({
       message: error.message,
     });
   }
