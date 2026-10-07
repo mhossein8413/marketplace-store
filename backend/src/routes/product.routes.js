@@ -7,6 +7,7 @@ import {
   updateProduct,
   deleteProduct,
     getMyProducts,
+    getRelatedProducts,
 } from "../controllers/product.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
@@ -24,5 +25,7 @@ router.patch("/:id", protect, updateProduct);
 router.delete("/:id", protect, deleteProduct);
 
 router.get("/my", protect, getMyProducts);
+
+router.get("/:id/related", getRelatedProducts);
 
 export default router;

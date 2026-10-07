@@ -43,13 +43,27 @@ export const createProduct = async (req, res) => {
 
 export const getProducts = async (req, res) => {
   try {
-    const products = await Product.find({
+    const { category, tag } = req.query;
+
+    const filter = {
       status: "approved",
-    })
-      .populate("seller", "name")
-      .populate("category", "name slug");
+    };
+
+    if (category) {
+      filter.category = category;
+    }
+
+    if (tag) {
+      filter.tags = tag;
+    }
+
+    const products = await Product.find(filter)
+      .populate("seller", "name email")
+      .populate("category", "name slug")
+      .sort({ createdAt: -1 });
 
     return res.status(200).json({
+      count: products.length,
       products,
     });
   } catch (error) {
@@ -189,3 +203,34 @@ export const getMyProducts = async (req, res) => {
     });
   }
 };  
+
+export const getRelatedProducts = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
+
+    const products = await Product.find({
+      _id: { $ne: product._id },
+      status: "approved",
+      category: product.category,
+      tags: { $in: product.tags },
+    })
+      .populate("seller", "name email")
+      .populate("category", "name slug")
+      .sort({ salesCount: -1, viewCount: -1 });
+
+    return res.status(200).json({
+      count: products.length,
+      products,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+};
