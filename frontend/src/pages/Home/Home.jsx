@@ -1,22 +1,38 @@
 import Hero from "../../components/home/Hero";
+import CategoryList from "../../components/home/CategoryList";
+import ProductSection from "../../components/products/ProductSection";
+
+import {
+  featuredProducts,
+  popularProducts,
+  latestProducts,
+} from "../../data/mockProducts";
 
 function Home() {
   return (
-    <>
+    <div>
       <Hero />
 
-      <section className="mx-auto max-w-7xl px-6 py-16">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">
-            در بازار جستجو کنید
-          </h2>
+      <CategoryList />
 
-          <p className="mt-3 text-gray-600">
-            محصولات مختلف را از دسته‌بندی‌ها و فروشندگان گوناگون پیدا کنید.
-          </p>
-        </div>
-      </section>
-    </>
+      <ProductSection
+        title="محصولات ویژه"
+        description="محصولاتی که توسط مدیریت انتخاب شده‌اند"
+        products={featuredProducts}
+      />
+
+      <ProductSection
+        title="محبوب‌ترین محصولات"
+        description="محصولاتی که بیشترین توجه کاربران را داشته‌اند"
+        products={popularProducts}
+      />
+
+      <ProductSection
+        title="جدیدترین محصولات"
+        description="تازه‌ترین محصولاتی که وارد بازار شده‌اند"
+        products={latestProducts}
+      />
+    </div>
   );
 }
 
