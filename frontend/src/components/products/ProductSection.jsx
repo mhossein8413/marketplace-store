@@ -1,41 +1,34 @@
-import { Link } from "react-router";
 import ProductCard from "./ProductCard";
 
-function ProductSection({
-  title,
-  description,
-  products,
-}) {
+function ProductSection({ title, products }) {
   return (
-    <section className="mx-auto max-w-7xl px-6 py-12">
-      <div className="mb-8 flex items-end justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
+    <section className="py-12">
+      <div className="mx-auto max-w-7xl px-6">
+
+        {/* Section Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">
             {title}
           </h2>
 
-          {description && (
-            <p className="mt-2 text-sm text-gray-500 md:text-base">
-              {description}
-            </p>
-          )}
+          <button
+            type="button"
+            className="text-sm font-medium text-gray-600 transition hover:text-black"
+          >
+            مشاهده همه
+          </button>
         </div>
 
-        <Link
-          to="/explore"
-          className="hidden text-sm font-medium text-gray-900 hover:underline sm:block"
-        >
-          مشاهده بیشتر
-        </Link>
-      </div>
+        {/* Products */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {products.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+            />
+          ))}
+        </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-          />
-        ))}
       </div>
     </section>
   );
