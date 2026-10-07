@@ -1,6 +1,22 @@
+import { Routes, Route } from "react-router";
+
+import MainLayout from "../layouts/MainLayout";
+
+import Home from "../pages/Home/Home";
+import Explore from "../pages/Explore/Explore";
+import ProductDetail from "../pages/ProductDetail/ProductDetail";
+
+import Login from "../pages/Auth/Login";
+import Register from "../pages/Auth/Register";
+
+import GuestRoute from "./GuestRoute";
+import Profile from "../pages/Profile/Profile";
+import ProtectedRoute from "./ProtectedRoute";
+
 function AppRoutes() {
   return (
     <Routes>
+
       <Route element={<MainLayout />}>
 
         <Route
@@ -18,8 +34,9 @@ function AppRoutes() {
           element={<ProductDetail />}
         />
 
-        {/* Guest only */}
+        {/* Guest Only Routes */}
         <Route element={<GuestRoute />}>
+
           <Route
             path="/login"
             element={<Login />}
@@ -29,17 +46,19 @@ function AppRoutes() {
             path="/register"
             element={<Register />}
           />
+
         </Route>
 
-        {/* Authenticated only */}
         <Route element={<ProtectedRoute />}>
-          <Route
-            path="/profile"
-            element={<Profile />}
-          />
-        </Route>
+        <Route
+          path="/profile"
+          element={<Profile />}
+        />
+      </Route>    
 
       </Route>
+
+      
 
       <Route
         path="*"
@@ -51,6 +70,9 @@ function AppRoutes() {
           </div>
         }
       />
+
     </Routes>
   );
 }
+
+export default AppRoutes;
