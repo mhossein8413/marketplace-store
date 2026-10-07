@@ -1,43 +1,198 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 
 import ProductCard from "../../components/products/ProductCard";
-import { exploreProducts } from "../../data/mockExploreProducts";
+import { getProducts } from "../../services/productService";
 
-const categories = [
-  "همه",
-  "موبایل",
-  "لپ‌تاپ",
-  "دیجیتال",
-  "پوشاک",
-  "خانه",
-  "کتاب",
-];
+function normalizeProduct(product) {
+  return {
+    id: product._id,
 
-const tags = [
-  "پرفروش",
-  "ویژه",
-  "جدید",
-  "اقتصادی",
-  "گیمینگ",
-  "روزمره",
-  "آموزشی",
-];
+    title: product.title,
+
+    description: product.description,
+
+    seller:
+      product.seller?.name ||
+      product.seller?.email ||
+      "فروشنده",
+
+    price: product.price,
+
+    stock: product.stock,
+
+    image: product.images?.[0] || "",
+
+    images: product.images || [],
+
+    category:
+      product.category?.name ||
+      "بدون دسته‌بندی",
+
+    categoryId:
+      product.category?._id ||
+      product.category ||
+      "",
+
+    tags: product.tags || [],
+
+    salesCount: product.salesCount || 0,
+
+    isFeatured: product.isFeatured || false,
+
+    createdAt: product.createdAt,
+  };
+}
 
 function Explore() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] =
+    useSearchParams();
 
   const query = searchParams.get("q") || "";
-  const category = searchParams.get("category") || "همه";
-  const tag = searchParams.get("tag") || "";
-  const sort = searchParams.get("sort") || "newest";
 
-  const [searchInput, setSearchInput] = useState(query);
+  const category =
+    searchParams.get("category") || "";
 
+  const tag =
+    searchParams.get("tag") || "";
+
+  const sort =
+    searchParams.get("sort") || "newest";
+
+  const [searchInput, setSearchInput] =
+    useState(query);
+
+  const productsQuery = useQuery({
+    queryKey: [
+      "products",
+      {
+        category,
+        tag,
+      },
+    ],
+
+    queryFn: () =>
+      getProducts({
+        category,
+        tag,
+      }),
+  });
+
+  const products = useMemo(() => {
+    if (!productsQuery.data) {
+      return [];
+    }
+
+    const data = productsQuery.data.products || [];
+
+    return data.map(normalizeProduct);
+  }, [productsQuery.data]);
+
+  // ----------------------------
+  // ساخت Categoryهای موجود
+  // ----------------------------
+  const categories = useMemo(() => {
+    const map = new Map();
+
+    products.forEach((product) => {
+      if (
+        product.categoryId &&
+        product.category
+      ) {
+        map.set(
+          product.categoryId,
+          product.category
+        );
+      }
+    });
+
+    return [
+      {
+        id: "",
+        name: "همه",
+      },
+      ...Array.from(map.entries()).map(
+        ([id, name]) => ({
+          id,
+          name,
+        })
+      ),
+    ];
+  }, [products]);
+
+  // ----------------------------
+  // ساخت Tagهای موجود
+  // ----------------------------
+  const tags = useMemo(() => {
+    const tagSet = new Set();
+
+    products.forEach((product) => {
+      product.tags.forEach((item) => {
+        tagSet.add(item);
+      });
+    });
+
+    return Array.from(tagSet);
+  }, [products]);
+
+  // ----------------------------
+  // Search + Sort در Frontend
+  // ----------------------------
+  const filteredProducts = useMemo(() => {
+    let result = [...products];
+
+    // Search
+    if (query) {
+      const normalizedQuery =
+        query.toLowerCase();
+
+      result = result.filter((product) =>
+        product.title
+          .toLowerCase()
+          .includes(normalizedQuery)
+      );
+    }
+
+    // Sort
+    if (sort === "price-low") {
+      result.sort(
+        (a, b) => a.price - b.price
+      );
+    }
+
+    if (sort === "price-high") {
+      result.sort(
+        (a, b) => b.price - a.price
+      );
+    }
+
+    if (sort === "popular") {
+      result.sort(
+        (a, b) =>
+          b.salesCount - a.salesCount
+      );
+    }
+
+    if (sort === "newest") {
+      result.sort(
+        (a, b) =>
+          new Date(b.createdAt) -
+          new Date(a.createdAt)
+      );
+    }
+
+    return result;
+  }, [products, query, sort]);
+
+  // ----------------------------
+  // تغییر Query Param
+  // ----------------------------
   const updateParam = (key, value) => {
-    const nextParams = new URLSearchParams(searchParams);
+    const nextParams =
+      new URLSearchParams(searchParams);
 
-    if (!value || value === "همه") {
+    if (!value) {
       nextParams.delete(key);
     } else {
       nextParams.set(key, value);
@@ -46,75 +201,89 @@ function Explore() {
     setSearchParams(nextParams);
   };
 
+  // ----------------------------
+  // Search
+  // ----------------------------
   const handleSearch = (event) => {
     event.preventDefault();
 
-    updateParam("q", searchInput.trim());
+    updateParam(
+      "q",
+      searchInput.trim()
+    );
   };
 
+  // ----------------------------
+  // Clear
+  // ----------------------------
   const clearFilters = () => {
     setSearchInput("");
+
     setSearchParams({});
   };
 
-  const filteredProducts = useMemo(() => {
-    const result = exploreProducts.filter((product) => {
-      const matchesSearch =
-        !query ||
-        product.title.toLowerCase().includes(query.toLowerCase());
+  // ----------------------------
+  // Loading
+  // ----------------------------
+  if (productsQuery.isPending) {
+    return (
+      <main className="mx-auto max-w-7xl px-6 py-20">
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-black" />
 
-      const matchesCategory =
-        category === "همه" ||
-        product.category === category;
-
-      const matchesTag =
-        !tag ||
-        product.tags.includes(tag);
-
-      return (
-        matchesSearch &&
-        matchesCategory &&
-        matchesTag
-      );
-    });
-
-    if (sort === "price-low") {
-      return [...result].sort(
-        (a, b) => a.price - b.price
-      );
-    }
-
-    if (sort === "price-high") {
-      return [...result].sort(
-        (a, b) => b.price - a.price
-      );
-    }
-
-    if (sort === "popular") {
-      return [...result].sort(
-        (a, b) => b.salesCount - a.salesCount
-      );
-    }
-
-    return [...result].sort(
-      (a, b) =>
-        new Date(b.createdAt) -
-        new Date(a.createdAt)
+            <p className="mt-4 text-gray-500">
+              در حال دریافت محصولات...
+            </p>
+          </div>
+        </div>
+      </main>
     );
-  }, [query, category, tag, sort]);
+  }
+
+  // ----------------------------
+  // Error
+  // ----------------------------
+  if (productsQuery.isError) {
+    return (
+      <main className="mx-auto max-w-7xl px-6 py-20">
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="max-w-md text-center">
+            <h1 className="text-2xl font-bold text-red-600">
+              دریافت محصولات با خطا مواجه شد
+            </h1>
+
+            <p className="mt-3 text-gray-500">
+              {productsQuery.error.message}
+            </p>
+
+            <button
+              type="button"
+              onClick={() =>
+                productsQuery.refetch()
+              }
+              className="mt-6 rounded-xl bg-gray-900 px-5 py-3 text-sm font-medium text-white hover:bg-gray-800"
+            >
+              تلاش دوباره
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10">
 
-      {/* عنوان */}
+      {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 md:text-4xl">
           کاوش محصولات
         </h1>
 
         <p className="mt-3 text-gray-500">
-          محصول موردنظرت را جستجو کن و با فیلترهای مختلف
-          راحت‌تر پیدایش کن.
+          محصول موردنظرت را جستجو کن و از بین محصولات
+          مختلف انتخاب کن.
         </p>
       </div>
 
@@ -127,7 +296,9 @@ function Explore() {
           type="text"
           value={searchInput}
           onChange={(event) =>
-            setSearchInput(event.target.value)
+            setSearchInput(
+              event.target.value
+            )
           }
           placeholder="مثلاً آیفون، لپ‌تاپ، هدفون..."
           className="h-12 flex-1 rounded-xl border border-gray-200 bg-white px-4 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
@@ -141,24 +312,26 @@ function Explore() {
         </button>
       </form>
 
-      {/* Category Filter */}
+      {/* Category */}
       <section className="mt-8">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-900">
-            دسته‌بندی
-          </h2>
-        </div>
+        <h2 className="mb-3 font-semibold text-gray-900">
+          دسته‌بندی
+        </h2>
 
         <div className="flex gap-2 overflow-x-auto pb-2">
           {categories.map((item) => {
-            const isActive = category === item;
+            const isActive =
+              category === item.id;
 
             return (
               <button
-                key={item}
+                key={item.id || "all"}
                 type="button"
                 onClick={() =>
-                  updateParam("category", item)
+                  updateParam(
+                    "category",
+                    item.id
+                  )
                 }
                 className={`whitespace-nowrap rounded-full px-4 py-2 text-sm transition ${
                   isActive
@@ -166,22 +339,23 @@ function Explore() {
                     : "border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900"
                 }`}
               >
-                {item}
+                {item.name}
               </button>
             );
           })}
         </div>
       </section>
 
-      {/* Tag Filter */}
+      {/* Tags */}
       <section className="mt-6">
         <h2 className="mb-3 font-semibold text-gray-900">
-          برچسب
+          برچسب‌ها
         </h2>
 
         <div className="flex flex-wrap gap-2">
           {tags.map((item) => {
-            const isActive = tag === item;
+            const isActive =
+              tag === item;
 
             return (
               <button
@@ -206,7 +380,7 @@ function Explore() {
         </div>
       </section>
 
-      {/* Sort + result count */}
+      {/* Sort */}
       <div className="mt-10 flex flex-col gap-4 border-y border-gray-200 py-5 sm:flex-row sm:items-center sm:justify-between">
 
         <p className="text-sm text-gray-500">
@@ -225,7 +399,10 @@ function Explore() {
             id="sort"
             value={sort}
             onChange={(event) =>
-              updateParam("sort", event.target.value)
+              updateParam(
+                "sort",
+                event.target.value
+              )
             }
             className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none"
           >
@@ -249,7 +426,7 @@ function Explore() {
       </div>
 
       {/* Active filters */}
-      {(query || category !== "همه" || tag) && (
+      {(query || category || tag) && (
         <div className="mt-5 flex flex-wrap items-center gap-2">
           <span className="text-sm text-gray-500">
             فیلترهای فعال:
@@ -261,9 +438,14 @@ function Explore() {
             </span>
           )}
 
-          {category !== "همه" && (
+          {category && (
             <span className="rounded-full bg-gray-100 px-3 py-1.5 text-sm text-gray-700">
-              {category}
+              {
+                categories.find(
+                  (item) =>
+                    item.id === category
+                )?.name || "دسته‌بندی"
+              }
             </span>
           )}
 
@@ -286,12 +468,14 @@ function Explore() {
       {/* Products */}
       {filteredProducts.length > 0 ? (
         <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {filteredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-            />
-          ))}
+          {filteredProducts.map(
+            (product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+              />
+            )
+          )}
         </div>
       ) : (
         <div className="mt-8 rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-20 text-center">
@@ -300,7 +484,7 @@ function Explore() {
           </h2>
 
           <p className="mt-2 text-sm text-gray-500">
-            فیلترها یا عبارت جستجو را تغییر بده و دوباره امتحان کن.
+            فیلترها یا عبارت جستجو را تغییر بده.
           </p>
 
           <button
@@ -312,7 +496,6 @@ function Explore() {
           </button>
         </div>
       )}
-
     </main>
   );
 }

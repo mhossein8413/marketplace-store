@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 import Product from "../models/Product.js";
 import "../models/Category.js";
 
@@ -73,30 +75,36 @@ export const getProducts = async (req, res) => {
   }
 };
 
-export const getProductById = async (req, res) => {
+export async function getProductById(req, res) {
   try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        message: "شناسه محصول معتبر نیست",
+      });
+    }
+
     const product = await Product.findOne({
-      _id: req.params.id,
+      _id: id,
       status: "approved",
     })
-      .populate("seller", "name")
+      .populate("seller", "name email")
       .populate("category", "name slug");
 
     if (!product) {
       return res.status(404).json({
-        message: "Product not found",
+        message: "محصول پیدا نشد",
       });
     }
 
-    return res.status(200).json({
-      product,
-    });
+    res.json(product);
   } catch (error) {
-    return res.status(500).json({
+    res.status(500).json({
       message: error.message,
     });
   }
-};
+}
 
 export const updateProduct = async (req, res) => {
   try {

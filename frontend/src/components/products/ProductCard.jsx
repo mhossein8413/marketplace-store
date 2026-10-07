@@ -7,7 +7,9 @@ function ProductCard({ product }) {
       className="block"
     >
       <article className="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-md">
-        <div className="aspect-square bg-gray-100">
+
+        {/* Image */}
+        <div className="aspect-square overflow-hidden bg-gray-100">
           {product.image ? (
             <img
               src={product.image}
@@ -21,7 +23,9 @@ function ProductCard({ product }) {
           )}
         </div>
 
+        {/* Content */}
         <div className="p-4">
+
           <div className="flex items-start justify-between gap-3">
             <h3 className="line-clamp-2 font-semibold text-gray-900">
               {product.title}
@@ -38,15 +42,23 @@ function ProductCard({ product }) {
             {product.seller}
           </p>
 
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4 flex items-center justify-between gap-2">
+
             <span className="font-bold text-gray-900">
-              {product.price.toLocaleString("fa-IR")} تومان
+              {product.price.toLocaleString("fa-IR")}
+              <span className="mr-1 text-xs font-normal text-gray-500">
+                تومان
+              </span>
             </span>
 
             <span className="text-xs text-gray-400">
-              {product.stock > 0 ? "موجود" : "ناموجود"}
+              {product.stock > 0
+                ? "موجود"
+                : "ناموجود"}
             </span>
+
           </div>
+
         </div>
       </article>
     </Link>
