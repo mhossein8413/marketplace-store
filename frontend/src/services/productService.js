@@ -21,6 +21,34 @@ async function request(url) {
   return data;
 }
 
+async function requestAuthenticated(
+  url,
+  token
+) {
+  const response = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  let data;
+
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "خطا در دریافت اطلاعات"
+    );
+  }
+
+  return data;
+}
+
 export function normalizeProduct(product) {
   return {
     id: product._id,
@@ -53,13 +81,19 @@ export function normalizeProduct(product) {
 
     tags: product.tags || [],
 
-    salesCount: product.salesCount || 0,
+    salesCount:
+      product.salesCount || 0,
 
-    viewCount: product.viewCount || 0,
+    viewCount:
+      product.viewCount || 0,
 
-    isFeatured: product.isFeatured || false,
+    isFeatured:
+      product.isFeatured || false,
 
     status: product.status,
+
+    rejectionReason:
+      product.rejectionReason || "",
 
     createdAt: product.createdAt,
 
@@ -81,7 +115,8 @@ export async function getProducts({
     params.set("tag", tag);
   }
 
-  const queryString = params.toString();
+  const queryString =
+    params.toString();
 
   const url = queryString
     ? `${API_URL}/products?${queryString}`
@@ -91,11 +126,20 @@ export async function getProducts({
 }
 
 export async function getProductById(id) {
-  return request(`${API_URL}/products/${id}`);
+  return request(
+    `${API_URL}/products/${id}`
+  );
 }
 
 export async function getRelatedProducts(id) {
   return request(
     `${API_URL}/products/${id}/related`
+  );
+}
+
+export async function getMyProducts(token) {
+  return requestAuthenticated(
+    `${API_URL}/products/my`,
+    token
   );
 }
