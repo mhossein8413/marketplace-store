@@ -1,6 +1,7 @@
 import Order from "../models/Order.js";
-import "../models/User.js";
-import "../models/Product.js";
+import User from "../models/User.js";
+import Product from "../models/Product.js";
+import mongoose from "mongoose";
 
 export const getMySales = async (req, res) => {
   try {
@@ -42,11 +43,30 @@ export const getMyOrders = async (req, res) => {
   }
 };
 
-export const createOrder = async (req, res) => {
-  try {
-    const { items, shippingAddress } = req.body;
+export async function createOrder(req, res) {
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
+  
+
+  
+  
+  try {
+    console.log("========== CREATE ORDER ==========");
+    console.log("URL:", req.originalUrl);
+    console.log("METHOD:", req.method);
+    console.log("CONTENT TYPE:", req.headers["content-type"]);
+    console.log("BODY:", req.body);
+    console.log("ITEMS:", req.body?.items);
+
+    const { items, shippingAddress } = req.body || {};
+
+    console.log("ORDER BODY:", req.body);
+    console.log("ORDER ITEMS:", items);
+
+    // -----------------------------
+    // Validation
+    // -----------------------------
+
+    if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
         message: "Order items are required",
       });
@@ -78,46 +98,94 @@ export const createOrder = async (req, res) => {
       });
     }
 
+    // -----------------------------
+    // Validate first product
+    // -----------------------------
+
+    const firstItem = items[0];
+
+    if (!firstItem?.product) {
+      return res.status(400).json({
+        message: "Product id is required",
+      });
+    }
+
+    if (!mongoose.isObjectIdOrHexString(firstItem.product)) {
+      return res.status(400).json({
+        message: "Invalid product id",
+      });
+    }
+
+    // -----------------------------
+    // Load products
+    // -----------------------------
+
+    const productIds = items.map((item) => item.product);
+
+    const products = await Product.find({
+      _id: { $in: productIds },
+      status: "approved",
+    }).populate("seller");
+
+    if (products.length !== items.length) {
+      return res.status(400).json({
+        message: "One or more products were not found or are not approved",
+      });
+    }
+
+    // -----------------------------
+    // Check seller
+    // -----------------------------
+
+    const sellerId = products[0].seller?._id?.toString();
+
+    if (!sellerId) {
+      return res.status(400).json({
+        message: "Product seller was not found",
+      });
+    }
+
+    for (const product of products) {
+      const productSellerId = product.seller?._id?.toString();
+
+      if (productSellerId !== sellerId) {
+        return res.status(400).json({
+          message:
+            "All products in one order must belong to the same seller",
+        });
+      }
+    }
+
+    // -----------------------------
+    // Build order items
+    // -----------------------------
+
     const orderItems = [];
     let totalAmount = 0;
-    let sellerId = null;
 
     for (const item of items) {
-      const { product: productId, quantity } = item;
-
-      if (!productId || !Number.isInteger(quantity) || quantity < 1) {
-        return res.status(400).json({
-          message: "Invalid product or quantity",
-        });
-      }
-
-      const product = await Product.findById(productId);
+      const product = products.find(
+        (product) =>
+          product._id.toString() === item.product.toString()
+      );
 
       if (!product) {
-        return res.status(404).json({
-          message: `Product ${productId} not found`,
+        return res.status(400).json({
+          message: "Product not found",
         });
       }
 
-      if (product.status !== "approved") {
+      const quantity = Number(item.quantity);
+
+      if (!Number.isInteger(quantity) || quantity <= 0) {
         return res.status(400).json({
-          message: `Product "${product.title}" is not available for purchase`,
+          message: `Invalid quantity for product ${product.title}`,
         });
       }
 
       if (product.stock < quantity) {
         return res.status(400).json({
-          message: `Not enough stock for "${product.title}"`,
-        });
-      }
-
-      if (!sellerId) {
-        sellerId = product.seller;
-      }
-
-      if (product.seller.toString() !== sellerId.toString()) {
-        return res.status(400).json({
-          message: "All products in one order must belong to the same seller",
+          message: `موجودی محصول «${product.title}» کافی نیست`,
         });
       }
 
@@ -132,37 +200,57 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    const order = await Order.create({
-      buyer: req.user.userId,
-      seller: sellerId,
-      items: orderItems,
-      totalAmount,
-      shippingAddress: {
-        recipientName,
-        phone,
-        city,
-        address,
-        postalCode,
-      },
-      status: "pending",
-    });
+    // -----------------------------
+    // Create order
+    // -----------------------------
 
-    for (const item of items) {
-      await Product.findByIdAndUpdate(item.product, {
-        $inc: {
-          stock: -item.quantity,
-          salesCount: item.quantity,
+    const order = await Order.create({
+        buyer: req.user.userId,
+        seller: sellerId,
+        items: orderItems,
+        totalAmount,
+        status: "pending",
+        shippingAddress: {
+          recipientName,
+          phone,
+          city,
+          address,
+          postalCode,
         },
       });
+
+    // -----------------------------
+    // Update stock and sales
+    // -----------------------------
+
+    for (const item of items) {
+      const quantity = Number(item.quantity);
+
+      await Product.findByIdAndUpdate(
+        item.product,
+        {
+          $inc: {
+            stock: -quantity,
+            salesCount: quantity,
+          },
+        }
+      );
     }
+
+    // -----------------------------
+    // Response
+    // -----------------------------
 
     return res.status(201).json({
       message: "Order created successfully",
       order,
     });
   } catch (error) {
+    console.error("CREATE ORDER ERROR:", error);
+
     return res.status(500).json({
-      message: error.message,
+      message: "خطا در ثبت سفارش",
+      error: error.message,
     });
   }
-};
+}

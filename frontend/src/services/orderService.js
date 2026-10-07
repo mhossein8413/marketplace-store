@@ -1,13 +1,15 @@
 const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:3000/api";
 
 async function request(url, options = {}) {
   const response = await fetch(url, {
+    ...options,
+
     headers: {
       "Content-Type": "application/json",
       ...(options.headers || {}),
     },
-    ...options,
   });
 
   let data;
@@ -29,6 +31,8 @@ async function request(url, options = {}) {
 
 export async function getMyOrders(token) {
   return request(`${API_URL}/orders/my`, {
+    method: "GET",
+
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -37,6 +41,8 @@ export async function getMyOrders(token) {
 
 export async function getMySales(token) {
   return request(`${API_URL}/orders/sales`, {
+    method: "GET",
+
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -46,9 +52,11 @@ export async function getMySales(token) {
 export async function createOrder(token, orderData) {
   return request(`${API_URL}/orders`, {
     method: "POST",
+
     headers: {
       Authorization: `Bearer ${token}`,
     },
+
     body: JSON.stringify(orderData),
   });
 }

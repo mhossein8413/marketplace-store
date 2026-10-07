@@ -8,21 +8,45 @@ import orderRoutes from "./routes/order.routes.js";
 
 const app = express();
 
+// -----------------------------
+// Global Middleware
+// -----------------------------
+
 app.use(cors());
+
 app.use(express.json());
+
+app.use(express.urlencoded({ extended: true }));
+
+// -----------------------------
+// Routes
+// -----------------------------
+
+app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/orders", orderRoutes);
+
+// -----------------------------
+// Test Route
+// -----------------------------
 
 app.get("/", (req, res) => {
   res.json({
-    message: "Marketplace API is running",
+    message: "API is running",
   });
 });
 
-app.use("/api/auth", authRoutes);
+// -----------------------------
+// Error Handler
+// -----------------------------
 
-app.use("/api/products", productRoutes);
+app.use((err, req, res, next) => {
+  console.error(err);
 
-app.use("/api/admin", adminRoutes);
-
-app.use("/api/orders", orderRoutes);  
+  res.status(500).json({
+    message: err.message || "خطای داخلی سرور",
+  });
+});
 
 export default app;

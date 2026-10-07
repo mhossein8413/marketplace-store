@@ -102,7 +102,11 @@ function Checkout() {
       }));
 
       const orderData = {
-        items: orderItems,
+        items: items.map((item) => ({
+          product: item.id,
+          quantity: item.quantity,
+        })),
+
         shippingAddress: {
           recipientName: form.recipientName.trim(),
           phone: form.phone.trim(),
@@ -111,6 +115,10 @@ function Checkout() {
           postalCode: form.postalCode.trim(),
         },
       };
+
+      console.log("CART ITEMS:", items);
+      console.log("ORDER DATA:", orderData);
+
 
       await createOrder(token, orderData);
 
