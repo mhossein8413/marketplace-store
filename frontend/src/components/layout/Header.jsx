@@ -1,26 +1,44 @@
-import { Link, NavLink } from "react-router";
+import { Link, NavLink, useNavigate } from "react-router";
+
+import { useAuthStore } from "../../store/authStore";
 
 function Header() {
-  return (
-    <header className="border-b border-gray-200 bg-white">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+  const navigate = useNavigate();
 
-        {/* لوگو */}
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+
+  function handleLogout() {
+    logout();
+
+    navigate("/", {
+      replace: true,
+    });
+  }
+
+  return (
+    <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur">
+      <div className="mx-auto flex h-[73px] max-w-7xl items-center justify-between px-6">
+
+        {/* Logo */}
         <Link
           to="/"
-          className="text-2xl font-bold tracking-tight text-gray-900"
+          className="text-2xl font-black tracking-tight text-black"
         >
           بازار
         </Link>
 
-        {/* منوی اصلی */}
+        {/* Navigation */}
         <nav className="hidden items-center gap-8 md:flex">
           <NavLink
             to="/"
+            end
             className={({ isActive }) =>
-              isActive
-                ? "font-medium text-gray-900"
-                : "text-gray-500 hover:text-gray-900"
+              `text-sm font-medium transition ${
+                isActive
+                  ? "text-black"
+                  : "text-gray-500 hover:text-black"
+              }`
             }
           >
             خانه
@@ -29,32 +47,59 @@ function Header() {
           <NavLink
             to="/explore"
             className={({ isActive }) =>
-              isActive
-                ? "font-medium text-gray-900"
-                : "text-gray-500 hover:text-gray-900"
+              `text-sm font-medium transition ${
+                isActive
+                  ? "text-black"
+                  : "text-gray-500 hover:text-black"
+              }`
             }
           >
             کاوش
           </NavLink>
         </nav>
 
-        {/* دکمه‌ها */}
+        {/* Auth */}
         <div className="flex items-center gap-3">
-          <Link
-            to="/login"
-            className="hidden rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 sm:block"
-          >
-            ورود
-          </Link>
+          {user ? (
+            <>
+              {/* User */}
+              <div className="hidden items-center gap-2 rounded-full bg-gray-100 px-4 py-2 sm:flex">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-xs font-bold text-white">
+                  {user.name?.charAt(0)?.toUpperCase() || "U"}
+                </div>
 
-          <Link
-            to="/register"
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
-          >
-            ثبت‌نام
-          </Link>
+                <span className="text-sm font-medium text-gray-800">
+                  {user.name}
+                </span>
+              </div>
+
+              {/* Logout */}
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+              >
+                خروج
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="rounded-xl px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+              >
+                ورود
+              </Link>
+
+              <Link
+                to="/register"
+                className="rounded-xl bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+              >
+                ثبت‌نام
+              </Link>
+            </>
+          )}
         </div>
-
       </div>
     </header>
   );
