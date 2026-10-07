@@ -1,5 +1,6 @@
 import { Outlet } from "react-router";
 import Header from "../components/layout/Header";
+import Footer from "../components/layout/Footer";
 
 function MainLayout() {
   return (
@@ -10,13 +11,7 @@ function MainLayout() {
         <Outlet />
       </main>
 
-      <footer className="border-t bg-white">
-        <div className="mx-auto max-w-7xl px-6 py-8">
-          <p className="text-sm text-gray-500">
-            © ۱۴۰۵ بازار آنلاین. تمامی حقوق محفوظ است.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
