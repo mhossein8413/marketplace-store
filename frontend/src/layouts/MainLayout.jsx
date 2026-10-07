@@ -1,4 +1,4 @@
-import { Link, Outlet } from "react-router";
+import { Outlet } from "react-router";
 import Header from "../components/layout/Header";
 
 function MainLayout() {
@@ -13,7 +13,7 @@ function MainLayout() {
       <footer className="border-t bg-white">
         <div className="mx-auto max-w-7xl px-6 py-8">
           <p className="text-sm text-gray-500">
-            © 2026 Marketplace. All rights reserved.
+            © ۱۴۰۵ بازار آنلاین. تمامی حقوق محفوظ است.
           </p>
         </div>
       </footer>

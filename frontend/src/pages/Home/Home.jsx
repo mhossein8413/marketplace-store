@@ -8,11 +8,11 @@ function Home() {
       <section className="mx-auto max-w-7xl px-6 py-16">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-gray-900">
-            Explore the marketplace
+            در بازار جستجو کنید
           </h2>
 
           <p className="mt-3 text-gray-600">
-            Find products from different categories and sellers.
+            محصولات مختلف را از دسته‌بندی‌ها و فروشندگان گوناگون پیدا کنید.
           </p>
         </div>
       </section>
