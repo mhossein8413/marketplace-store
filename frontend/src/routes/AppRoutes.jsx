@@ -13,6 +13,9 @@ import GuestRoute from "./GuestRoute";
 import Profile from "../pages/Profile/Profile";
 import ProtectedRoute from "./ProtectedRoute";
 
+import Cart from "../pages/Cart/Cart";
+import Checkout  from "../pages/Checkout/Checkout.jsx";
+
 function AppRoutes() {
   return (
     <Routes>
@@ -54,11 +57,16 @@ function AppRoutes() {
           path="/profile"
           element={<Profile />}
         />
-      </Route>    
 
-      </Route>
+        <Route path="/checkout" element={<Checkout />} />
+      </Route>  
 
-      
+      <Route
+          path="/cart"
+          element={<Cart />}
+        />  
+
+      </Route>      
 
       <Route
         path="*"

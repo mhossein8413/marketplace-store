@@ -1,12 +1,13 @@
 const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
-async function request(url, token) {
+async function request(url, options = {}) {
   const response = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      ...(options.headers || {}),
     },
+    ...options,
   });
 
   let data;
@@ -19,7 +20,7 @@ async function request(url, token) {
 
   if (!response.ok) {
     throw new Error(
-      data.message || "خطا در دریافت اطلاعات سفارش"
+      data.message || "خطا در ارتباط با سرور"
     );
   }
 
@@ -27,15 +28,27 @@ async function request(url, token) {
 }
 
 export async function getMyOrders(token) {
-  return request(
-    `${API_URL}/orders/my`,
-    token
-  );
+  return request(`${API_URL}/orders/my`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 }
 
 export async function getMySales(token) {
-  return request(
-    `${API_URL}/orders/sales`,
-    token
-  );
+  return request(`${API_URL}/orders/sales`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export async function createOrder(token, orderData) {
+  return request(`${API_URL}/orders`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(orderData),
+  });
 }
