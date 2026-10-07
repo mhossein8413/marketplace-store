@@ -19,7 +19,6 @@ function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur">
       <div className="mx-auto flex h-[73px] max-w-7xl items-center justify-between px-6">
-
         {/* Logo */}
         <Link
           to="/"
@@ -58,20 +57,36 @@ function Header() {
           </NavLink>
         </nav>
 
-        {/* Auth */}
+        {/* Authentication */}
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              {/* User */}
-              <div className="hidden items-center gap-2 rounded-full bg-gray-100 px-4 py-2 sm:flex">
+              {/* Profile */}
+              <Link
+                to="/profile"
+                className="hidden items-center gap-2 rounded-full bg-gray-100 px-3 py-2 transition hover:bg-gray-200 sm:flex"
+              >
+                {/* Avatar */}
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-xs font-bold text-white">
                   {user.name?.charAt(0)?.toUpperCase() || "U"}
                 </div>
 
-                <span className="text-sm font-medium text-gray-800">
+                {/* Name */}
+                <span className="max-w-[120px] truncate text-sm font-medium text-gray-800">
                   {user.name}
                 </span>
-              </div>
+              </Link>
+
+              {/* Mobile Profile */}
+              <Link
+                to="/profile"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 transition hover:bg-gray-200 sm:hidden"
+                aria-label="پروفایل"
+              >
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black text-xs font-bold text-white">
+                  {user.name?.charAt(0)?.toUpperCase() || "U"}
+                </div>
+              </Link>
 
               {/* Logout */}
               <button
@@ -84,6 +99,7 @@ function Header() {
             </>
           ) : (
             <>
+              {/* Login */}
               <Link
                 to="/login"
                 className="rounded-xl px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
@@ -91,6 +107,7 @@ function Header() {
                 ورود
               </Link>
 
+              {/* Register */}
               <Link
                 to="/register"
                 className="rounded-xl bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
