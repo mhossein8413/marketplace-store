@@ -21,6 +21,52 @@ async function request(url) {
   return data;
 }
 
+export function normalizeProduct(product) {
+  return {
+    id: product._id,
+
+    title: product.title,
+
+    description: product.description || "",
+
+    seller:
+      product.seller?.name ||
+      product.seller?.email ||
+      "فروشنده",
+
+    price: product.price,
+
+    stock: product.stock,
+
+    image: product.images?.[0] || "",
+
+    images: product.images || [],
+
+    category:
+      product.category?.name ||
+      "بدون دسته‌بندی",
+
+    categoryId:
+      product.category?._id ||
+      product.category ||
+      "",
+
+    tags: product.tags || [],
+
+    salesCount: product.salesCount || 0,
+
+    viewCount: product.viewCount || 0,
+
+    isFeatured: product.isFeatured || false,
+
+    status: product.status,
+
+    createdAt: product.createdAt,
+
+    updatedAt: product.updatedAt,
+  };
+}
+
 export async function getProducts({
   category = "",
   tag = "",
@@ -49,5 +95,7 @@ export async function getProductById(id) {
 }
 
 export async function getRelatedProducts(id) {
-  return request(`${API_URL}/products/${id}/related`);
+  return request(
+    `${API_URL}/products/${id}/related`
+  );
 }

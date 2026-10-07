@@ -1,39 +1,10 @@
 import { Link } from "react-router";
 
-const categories = [
-  {
-    id: 1,
-    name: "موبایل",
-    description: "گوشی و لوازم جانبی",
-  },
-  {
-    id: 2,
-    name: "لپ‌تاپ",
-    description: "لپ‌تاپ و کامپیوتر",
-  },
-  {
-    id: 3,
-    name: "پوشاک",
-    description: "لباس و اکسسوری",
-  },
-  {
-    id: 4,
-    name: "خانه",
-    description: "وسایل خانه",
-  },
-  {
-    id: 5,
-    name: "کتاب",
-    description: "کتاب و آموزش",
-  },
-  {
-    id: 6,
-    name: "ورزش",
-    description: "لوازم ورزشی",
-  },
-];
+function CategoryList({ categories = [] }) {
+  if (categories.length === 0) {
+    return null;
+  }
 
-function CategoryList() {
   return (
     <section className="mx-auto max-w-7xl px-6 py-16">
       <div className="mb-8 flex items-end justify-between">
@@ -43,7 +14,7 @@ function CategoryList() {
           </h2>
 
           <p className="mt-2 text-sm text-gray-500 md:text-base">
-            محصولات موردنظرت را از دسته‌بندی‌های مختلف پیدا کن
+            محصولات موردنظرت را از دسته‌بندی‌های مختلف پیدا کن.
           </p>
         </div>
 
@@ -59,7 +30,7 @@ function CategoryList() {
         {categories.map((category) => (
           <Link
             key={category.id}
-            to="/explore"
+            to={`/explore?category=${category.id}`}
             className="group rounded-2xl border border-gray-200 bg-white p-5 transition hover:-translate-y-1 hover:border-gray-300 hover:shadow-sm"
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-sm font-bold text-gray-700">
@@ -71,7 +42,7 @@ function CategoryList() {
             </h3>
 
             <p className="mt-1 text-xs leading-5 text-gray-500">
-              {category.description}
+              مشاهده محصولات
             </p>
           </Link>
         ))}
