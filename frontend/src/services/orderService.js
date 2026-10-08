@@ -28,9 +28,9 @@ async function request(url, options = {}) {
   return data;
 }
 
-// ==============================
-// دریافت سفارش‌های خریدار
-// ==============================
+/* =========================================================
+   GET MY ORDERS
+========================================================= */
 
 export async function getMyOrders(token) {
   return request(`${API_URL}/orders/my`, {
@@ -41,9 +41,9 @@ export async function getMyOrders(token) {
   });
 }
 
-// ==============================
-// دریافت فروش‌های فروشنده
-// ==============================
+/* =========================================================
+   GET MY SALES
+========================================================= */
 
 export async function getMySales(token) {
   return request(`${API_URL}/orders/sales`, {
@@ -54,9 +54,9 @@ export async function getMySales(token) {
   });
 }
 
-// ==============================
-// ثبت سفارش
-// ==============================
+/* =========================================================
+   CREATE ORDER
+========================================================= */
 
 export async function createOrder(token, orderData) {
   return request(`${API_URL}/orders`, {
@@ -68,12 +68,25 @@ export async function createOrder(token, orderData) {
   });
 }
 
-// ==============================
-// لغو سفارش
-// ==============================
+/* =========================================================
+   CANCEL ORDER
+========================================================= */
 
 export async function cancelOrder(token, orderId) {
   return request(`${API_URL}/orders/${orderId}/cancel`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+/* =========================================================
+   APPROVE ORDER
+========================================================= */
+
+export async function approveOrder(token, orderId) {
+  return request(`${API_URL}/orders/${orderId}/approve`, {
     method: "PATCH",
     headers: {
       Authorization: `Bearer ${token}`,

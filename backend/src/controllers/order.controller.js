@@ -1,7 +1,11 @@
 import Order from "../models/Order.js";
-import User from "../models/User.js";
 import Product from "../models/Product.js";
 import mongoose from "mongoose";
+
+/* =========================================================
+   GET MY SALES
+   سفارش‌هایی که مربوط به فروشنده لاگین‌شده هستند
+========================================================= */
 
 export const getMySales = async (req, res) => {
   try {
@@ -23,6 +27,11 @@ export const getMySales = async (req, res) => {
   }
 };
 
+/* =========================================================
+   GET MY ORDERS
+   سفارش‌هایی که خریدار لاگین‌شده ثبت کرده
+========================================================= */
+
 export const getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({
@@ -43,15 +52,12 @@ export const getMyOrders = async (req, res) => {
   }
 };
 
+/* =========================================================
+   CREATE ORDER
+========================================================= */
+
 export async function createOrder(req, res) {
-
-  
-
-  
-  
   try {
-
-    const session = await mongoose.startSession();
     console.log("========== CREATE ORDER ==========");
     console.log("URL:", req.originalUrl);
     console.log("METHOD:", req.method);
@@ -64,9 +70,9 @@ export async function createOrder(req, res) {
     console.log("ORDER BODY:", req.body);
     console.log("ORDER ITEMS:", items);
 
-    // -----------------------------
-    // Validation
-    // -----------------------------
+    /* -----------------------------
+       Validation
+    ----------------------------- */
 
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
@@ -100,9 +106,9 @@ export async function createOrder(req, res) {
       });
     }
 
-    // -----------------------------
-    // Validate first product
-    // -----------------------------
+    /* -----------------------------
+       Validate first product
+    ----------------------------- */
 
     const firstItem = items[0];
 
@@ -118,9 +124,9 @@ export async function createOrder(req, res) {
       });
     }
 
-    // -----------------------------
-    // Load products
-    // -----------------------------
+    /* -----------------------------
+       Load products
+    ----------------------------- */
 
     const productIds = items.map((item) => item.product);
 
@@ -131,15 +137,16 @@ export async function createOrder(req, res) {
 
     if (products.length !== items.length) {
       return res.status(400).json({
-        message: "One or more products were not found or are not approved",
+        message:
+          "One or more products were not found or are not approved",
       });
     }
 
-    // -----------------------------
-    // Check seller
-    // -----------------------------
+    /* -----------------------------
+       Check seller
+    ----------------------------- */
 
-    const sellerId = products[0].seller?._id?.toString();
+    const sellerId = products[0]?.seller?._id?.toString();
 
     if (!sellerId) {
       return res.status(400).json({
@@ -148,7 +155,8 @@ export async function createOrder(req, res) {
     }
 
     for (const product of products) {
-      const productSellerId = product.seller?._id?.toString();
+      const productSellerId =
+        product.seller?._id?.toString();
 
       if (productSellerId !== sellerId) {
         return res.status(400).json({
@@ -158,9 +166,9 @@ export async function createOrder(req, res) {
       }
     }
 
-    // -----------------------------
-    // Build order items
-    // -----------------------------
+    /* -----------------------------
+       Build order items
+    ----------------------------- */
 
     const orderItems = [];
     let totalAmount = 0;
@@ -168,7 +176,8 @@ export async function createOrder(req, res) {
     for (const item of items) {
       const product = products.find(
         (product) =>
-          product._id.toString() === item.product.toString()
+          product._id.toString() ===
+          item.product.toString()
       );
 
       if (!product) {
@@ -202,28 +211,28 @@ export async function createOrder(req, res) {
       });
     }
 
-    // -----------------------------
-    // Create order
-    // -----------------------------
+    /* -----------------------------
+       Create order
+    ----------------------------- */
 
     const order = await Order.create({
-        buyer: req.user.userId,
-        seller: sellerId,
-        items: orderItems,
-        totalAmount,
-        status: "pending",
-        shippingAddress: {
-          recipientName,
-          phone,
-          city,
-          address,
-          postalCode,
-        },
-      });
+      buyer: req.user.userId,
+      seller: sellerId,
+      items: orderItems,
+      totalAmount,
+      status: "pending",
+      shippingAddress: {
+        recipientName,
+        phone,
+        city,
+        address,
+        postalCode,
+      },
+    });
 
-    // -----------------------------
-    // Update stock and sales
-    // -----------------------------
+    /* -----------------------------
+       Update stock and sales
+    ----------------------------- */
 
     for (const item of items) {
       const quantity = Number(item.quantity);
@@ -239,9 +248,9 @@ export async function createOrder(req, res) {
       );
     }
 
-    // -----------------------------
-    // Response
-    // -----------------------------
+    /* -----------------------------
+       Response
+    ----------------------------- */
 
     return res.status(201).json({
       message: "Order created successfully",
@@ -257,6 +266,11 @@ export async function createOrder(req, res) {
   }
 }
 
+/* =========================================================
+   CANCEL ORDER
+   فقط خریدار و فقط وقتی pending است
+========================================================= */
+
 export async function cancelOrder(req, res) {
   try {
     const { id } = req.params;
@@ -265,9 +279,9 @@ export async function cancelOrder(req, res) {
     console.log("ORDER ID:", id);
     console.log("USER ID:", req.user?.userId);
 
-    // -----------------------------
-    // Find order
-    // -----------------------------
+    /* -----------------------------
+       Find order
+    ----------------------------- */
 
     const order = await Order.findOne({
       _id: id,
@@ -280,9 +294,9 @@ export async function cancelOrder(req, res) {
       });
     }
 
-    // -----------------------------
-    // Check order status
-    // -----------------------------
+    /* -----------------------------
+       Check order status
+    ----------------------------- */
 
     if (order.status !== "pending") {
       return res.status(400).json({
@@ -290,9 +304,9 @@ export async function cancelOrder(req, res) {
       });
     }
 
-    // -----------------------------
-    // Restore product stock
-    // -----------------------------
+    /* -----------------------------
+       Restore product stock
+    ----------------------------- */
 
     for (const item of order.items) {
       await Product.findByIdAndUpdate(
@@ -306,17 +320,17 @@ export async function cancelOrder(req, res) {
       );
     }
 
-    // -----------------------------
-    // Cancel order
-    // -----------------------------
+    /* -----------------------------
+       Cancel order
+    ----------------------------- */
 
     order.status = "cancelled";
 
     await order.save();
 
-    // -----------------------------
-    // Response
-    // -----------------------------
+    /* -----------------------------
+       Response
+    ----------------------------- */
 
     return res.status(200).json({
       message: "سفارش با موفقیت لغو شد",
@@ -327,6 +341,70 @@ export async function cancelOrder(req, res) {
 
     return res.status(500).json({
       message: "خطا در لغو سفارش",
+      error: error.message,
+    });
+  }
+}
+
+/* =========================================================
+   APPROVE ORDER
+   فقط فروشنده صاحب سفارش می‌تواند آن را تأیید کند
+========================================================= */
+
+export async function approveOrder(req, res) {
+  try {
+    const { id } = req.params;
+
+    console.log("========== APPROVE ORDER ==========");
+    console.log("ORDER ID:", id);
+    console.log("SELLER ID:", req.user?.userId);
+
+    /* -----------------------------
+       Find seller's order
+    ----------------------------- */
+
+    const order = await Order.findOne({
+      _id: id,
+      seller: req.user.userId,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        message: "سفارش پیدا نشد",
+      });
+    }
+
+    /* -----------------------------
+       Only pending orders
+    ----------------------------- */
+
+    if (order.status !== "pending") {
+      return res.status(400).json({
+        message: "این سفارش در وضعیت قابل تأیید نیست",
+      });
+    }
+
+    /* -----------------------------
+       Approve order
+    ----------------------------- */
+
+    order.status = "approved";
+
+    await order.save();
+
+    /* -----------------------------
+       Response
+    ----------------------------- */
+
+    return res.status(200).json({
+      message: "سفارش با موفقیت تأیید شد",
+      order,
+    });
+  } catch (error) {
+    console.error("APPROVE ORDER ERROR:", error);
+
+    return res.status(500).json({
+      message: "خطا در تأیید سفارش",
       error: error.message,
     });
   }
