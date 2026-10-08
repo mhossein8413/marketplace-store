@@ -17,6 +17,8 @@ import {
 
 import { getMyProducts } from "../../services/productService";
 
+import { Link } from "react-router";
+
 /* =========================
    Helpers
 ========================= */
@@ -78,6 +80,7 @@ function ProductCard({ product }) {
     <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex gap-4">
         <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100">
+          
           {product.images?.[0] ? (
             <img
               src={product.images[0]}
@@ -758,8 +761,10 @@ export default function Profile() {
                   : "text-gray-400 hover:text-gray-700"
               }`}
             >
-              محصولات من
+              محصولات من  
             </button>
+
+            
 
             <button
               type="button"
@@ -827,10 +832,18 @@ export default function Profile() {
               My Products
           ========================= */}
 
+         
+
           {!currentLoading &&
             !currentError &&
             activeTab === "products" && (
               <div className="space-y-4">
+                 <Link
+                  to="/products/create"
+                  className="rounded-xl bg-black px-4 py-2.5 text-sm font-bold text-white transition hover:bg-gray-800"
+                >
+                  + ثبت محصول 
+                </Link>
                 {products.length === 0 ? (
                   <div className="rounded-2xl bg-white p-10 text-center text-gray-400 shadow-sm">
                     هنوز محصولی ثبت نکرده‌اید.

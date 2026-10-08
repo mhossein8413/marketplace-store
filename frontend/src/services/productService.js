@@ -1,34 +1,24 @@
 const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:3000/api";
 
-async function request(url) {
-  const response = await fetch(url);
+const API_ORIGIN =
+  API_URL.replace(/\/api\/?$/, "");
 
-  let data;
+/*
+|--------------------------------------------------------------------------
+| Request
+|--------------------------------------------------------------------------
+*/
 
-  try {
-    data = await response.json();
-  } catch {
-    data = {};
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      data.message || "خطا در دریافت اطلاعات"
-    );
-  }
-
-  return data;
-}
-
-async function requestAuthenticated(
+async function request(
   url,
-  token
+  options = {}
 ) {
   const response = await fetch(url, {
+    ...options,
     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      ...(options.headers || {}),
     },
   });
 
@@ -42,20 +32,89 @@ async function requestAuthenticated(
 
   if (!response.ok) {
     throw new Error(
-      data.message || "خطا در دریافت اطلاعات"
+      data.message ||
+        "خطا در ارتباط با سرور"
     );
   }
 
   return data;
 }
 
-export function normalizeProduct(product) {
+/*
+|--------------------------------------------------------------------------
+| Authenticated Request
+|--------------------------------------------------------------------------
+*/
+
+async function requestAuthenticated(
+  url,
+  token,
+  options = {}
+) {
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    ...(options.headers || {}),
+  };
+
+  /*
+   * وقتی body از نوع FormData است،
+   * نباید Content-Type را دستی تعیین کنیم.
+   * Browser خودش boundary مربوط به multipart/form-data
+   * را قرار می‌دهد.
+   */
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] =
+      "application/json";
+  }
+
+  return request(url, {
+    ...options,
+    headers,
+  });
+}
+
+/*
+|--------------------------------------------------------------------------
+| Image URL
+|--------------------------------------------------------------------------
+*/
+
+function normalizeImageUrl(image) {
+  if (!image) {
+    return "";
+  }
+
+  if (
+    image.startsWith("http://") ||
+    image.startsWith("https://") ||
+    image.startsWith("blob:")
+  ) {
+    return image;
+  }
+
+  return `${API_ORIGIN}${
+    image.startsWith("/")
+      ? image
+      : `/${image}`
+  }`;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Normalize Product
+|--------------------------------------------------------------------------
+*/
+
+export function normalizeProduct(
+  product
+) {
   return {
     id: product._id,
 
     title: product.title,
 
-    description: product.description || "",
+    description:
+      product.description || "",
 
     seller:
       product.seller?.name ||
@@ -66,9 +125,14 @@ export function normalizeProduct(product) {
 
     stock: product.stock,
 
-    image: product.images?.[0] || "",
+    image: normalizeImageUrl(
+      product.images?.[0]
+    ),
 
-    images: product.images || [],
+    images:
+      (product.images || []).map(
+        normalizeImageUrl
+      ),
 
     category:
       product.category?.name ||
@@ -79,7 +143,8 @@ export function normalizeProduct(product) {
       product.category ||
       "",
 
-    tags: product.tags || [],
+    tags:
+      product.tags || [],
 
     salesCount:
       product.salesCount || 0,
@@ -90,25 +155,38 @@ export function normalizeProduct(product) {
     isFeatured:
       product.isFeatured || false,
 
-    status: product.status,
+    status:
+      product.status,
 
     rejectionReason:
       product.rejectionReason || "",
 
-    createdAt: product.createdAt,
+    createdAt:
+      product.createdAt,
 
-    updatedAt: product.updatedAt,
+    updatedAt:
+      product.updatedAt,
   };
 }
+
+/*
+|--------------------------------------------------------------------------
+| Get Public Products
+|--------------------------------------------------------------------------
+*/
 
 export async function getProducts({
   category = "",
   tag = "",
 } = {}) {
-  const params = new URLSearchParams();
+  const params =
+    new URLSearchParams();
 
   if (category) {
-    params.set("category", category);
+    params.set(
+      "category",
+      category
+    );
   }
 
   if (tag) {
@@ -125,21 +203,144 @@ export async function getProducts({
   return request(url);
 }
 
-export async function getProductById(id) {
+/*
+|--------------------------------------------------------------------------
+| Get Categories
+|--------------------------------------------------------------------------
+*/
+
+export async function getCategories() {
+  return request(
+    `${API_URL}/products/categories`
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Create Category
+|--------------------------------------------------------------------------
+*/
+
+export async function createCategory(
+  token,
+  name
+) {
+  return requestAuthenticated(
+    `${API_URL}/products/categories`,
+    token,
+    {
+      method: "POST",
+
+      body: JSON.stringify({
+        name,
+      }),
+    }
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Get Product By ID
+|--------------------------------------------------------------------------
+*/
+
+export async function getProductById(
+  id
+) {
   return request(
     `${API_URL}/products/${id}`
   );
 }
 
-export async function getRelatedProducts(id) {
+/*
+|--------------------------------------------------------------------------
+| Get Related Products
+|--------------------------------------------------------------------------
+*/
+
+export async function getRelatedProducts(
+  id
+) {
   return request(
     `${API_URL}/products/${id}/related`
   );
 }
 
-export async function getMyProducts(token) {
+/*
+|--------------------------------------------------------------------------
+| Get My Products
+|--------------------------------------------------------------------------
+*/
+
+export async function getMyProducts(
+  token
+) {
   return requestAuthenticated(
     `${API_URL}/products/my`,
     token
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Create Product
+|--------------------------------------------------------------------------
+*/
+
+export async function createProduct(
+  token,
+  formData
+) {
+  return requestAuthenticated(
+    `${API_URL}/products`,
+    token,
+    {
+      method: "POST",
+
+      body: formData,
+    }
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Update Product
+|--------------------------------------------------------------------------
+*/
+
+export async function updateProduct(
+  token,
+  productId,
+  productData
+) {
+  return requestAuthenticated(
+    `${API_URL}/products/${productId}`,
+    token,
+    {
+      method: "PATCH",
+
+      body: JSON.stringify(
+        productData
+      ),
+    }
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Delete Product
+|--------------------------------------------------------------------------
+*/
+
+export async function deleteProduct(
+  token,
+  productId
+) {
+  return requestAuthenticated(
+    `${API_URL}/products/${productId}`,
+    token,
+    {
+      method: "DELETE",
+    }
   );
 }

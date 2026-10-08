@@ -6,26 +6,115 @@ import {
   getProductById,
   updateProduct,
   deleteProduct,
-    getMyProducts,
-    getRelatedProducts,
+  getMyProducts,
+  getRelatedProducts,
+  getCategories,
+  createCategory,
+  getProductImage,
 } from "../controllers/product.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
 
-const router = express.Router();
+import {
+  uploadProductImages,
+} from "../middlewares/upload.middleware.js";
 
-router.post("/", protect, createProduct);
+const router =
+  express.Router();
 
-router.get("/", getProducts);
+/*
+|--------------------------------------------------------------------------
+| Categories
+|--------------------------------------------------------------------------
+| IMPORTANT:
+| These routes must be before /:id
+|--------------------------------------------------------------------------
+*/
 
-router.get("/:id", getProductById);
+router.get(
+  "/categories",
+  getCategories
+);
 
-router.patch("/:id", protect, updateProduct);
+router.post(
+  "/categories",
+  protect,
+  createCategory
+);
 
-router.delete("/:id", protect, deleteProduct);
+/*
+|--------------------------------------------------------------------------
+| Public Products
+|--------------------------------------------------------------------------
+*/
 
-router.get("/my", protect, getMyProducts);
+router.get(
+  "/",
+  getProducts
+);
 
-router.get("/:id/related", getRelatedProducts);
+/*
+|--------------------------------------------------------------------------
+| Seller Products
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/my",
+  protect,
+  getMyProducts
+);
+
+/*
+|--------------------------------------------------------------------------
+| Product Images
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/images/:filename",
+  getProductImage
+);
+
+/*
+|--------------------------------------------------------------------------
+| Product By ID
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/:id",
+  getProductById
+);
+
+router.get(
+  "/:id/related",
+  getRelatedProducts
+);
+
+/*
+|--------------------------------------------------------------------------
+| Seller Product Management
+|--------------------------------------------------------------------------
+*/
+
+router.post(
+  "/",
+  protect,
+  uploadProductImages,
+  createProduct
+);
+
+router.patch(
+  "/:id",
+  protect,
+  updateProduct
+);
+
+router.delete(
+  "/:id",
+  protect,
+  deleteProduct
+);
 
 export default router;

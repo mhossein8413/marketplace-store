@@ -1,4 +1,7 @@
-import { Routes, Route } from "react-router";
+import {
+  Routes,
+  Route,
+} from "react-router";
 
 import MainLayout from "../layouts/MainLayout";
 
@@ -9,18 +12,21 @@ import ProductDetail from "../pages/ProductDetail/ProductDetail";
 import Login from "../pages/Auth/Login";
 import Register from "../pages/Auth/Register";
 
-import GuestRoute from "./GuestRoute";
 import Profile from "../pages/Profile/Profile";
-import ProtectedRoute from "./ProtectedRoute";
-
 import Cart from "../pages/Cart/Cart";
-import Checkout  from "../pages/Checkout/Checkout.jsx";
+import Checkout from "../pages/Checkout/Checkout.jsx";
+
+import CreateProduct from "../pages/CreateProduct/CreateProduct";
+
+import GuestRoute from "./GuestRoute";
+import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
   return (
     <Routes>
-
       <Route element={<MainLayout />}>
+
+        {/* Public */}
 
         <Route
           path="/"
@@ -37,9 +43,14 @@ function AppRoutes() {
           element={<ProductDetail />}
         />
 
-        {/* Guest Only Routes */}
-        <Route element={<GuestRoute />}>
+        <Route
+          path="/cart"
+          element={<Cart />}
+        />
 
+        {/* Guest Only */}
+
+        <Route element={<GuestRoute />}>
           <Route
             path="/login"
             element={<Login />}
@@ -49,36 +60,47 @@ function AppRoutes() {
             path="/register"
             element={<Register />}
           />
-
         </Route>
 
+        {/* Protected */}
+
         <Route element={<ProtectedRoute />}>
+          <Route
+            path="/profile"
+            element={<Profile />}
+          />
+
+          <Route
+            path="/checkout"
+            element={<Checkout />}
+          />
+
+          <Route
+            path="/products/create"
+            element={<CreateProduct />}
+          />
+        </Route>
+
+        {/* 404 */}
+
         <Route
-          path="/profile"
-          element={<Profile />}
+          path="*"
+          element={
+            <div className="flex min-h-[calc(100vh-73px)] items-center justify-center px-6">
+              <div className="text-center">
+                <h1 className="text-3xl font-black text-red-500">
+                  این مسیر پیدا نشد
+                </h1>
+
+                <p className="mt-3 text-sm text-gray-500">
+                  صفحه موردنظر وجود ندارد.
+                </p>
+              </div>
+            </div>
+          }
         />
 
-        <Route path="/checkout" element={<Checkout />} />
-      </Route>  
-
-      <Route
-          path="/cart"
-          element={<Cart />}
-        />  
-
-      </Route>      
-
-      <Route
-        path="*"
-        element={
-          <div className="flex min-h-screen items-center justify-center">
-            <h1 className="text-3xl font-bold text-red-500">
-              این مسیر پیدا نشد
-            </h1>
-          </div>
-        }
-      />
-
+      </Route>
     </Routes>
   );
 }

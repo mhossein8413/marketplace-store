@@ -93,7 +93,7 @@ function Footer() {
 
               <li>
                 <Link
-                  to="/profile/products/new"
+                  to="/products/create"
                   className="transition hover:text-gray-900"
                 >
                   ثبت محصول
