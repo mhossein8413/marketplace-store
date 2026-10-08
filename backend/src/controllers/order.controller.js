@@ -50,6 +50,8 @@ export async function createOrder(req, res) {
   
   
   try {
+
+    const session = await mongoose.startSession();
     console.log("========== CREATE ORDER ==========");
     console.log("URL:", req.originalUrl);
     console.log("METHOD:", req.method);
@@ -250,6 +252,81 @@ export async function createOrder(req, res) {
 
     return res.status(500).json({
       message: "خطا در ثبت سفارش",
+      error: error.message,
+    });
+  }
+}
+
+export async function cancelOrder(req, res) {
+  try {
+    const { id } = req.params;
+
+    console.log("========== CANCEL ORDER ==========");
+    console.log("ORDER ID:", id);
+    console.log("USER ID:", req.user?.userId);
+
+    // -----------------------------
+    // Find order
+    // -----------------------------
+
+    const order = await Order.findOne({
+      _id: id,
+      buyer: req.user.userId,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        message: "سفارش پیدا نشد",
+      });
+    }
+
+    // -----------------------------
+    // Check order status
+    // -----------------------------
+
+    if (order.status !== "pending") {
+      return res.status(400).json({
+        message: "این سفارش دیگر قابل لغو نیست",
+      });
+    }
+
+    // -----------------------------
+    // Restore product stock
+    // -----------------------------
+
+    for (const item of order.items) {
+      await Product.findByIdAndUpdate(
+        item.product,
+        {
+          $inc: {
+            stock: item.quantity,
+            salesCount: -item.quantity,
+          },
+        }
+      );
+    }
+
+    // -----------------------------
+    // Cancel order
+    // -----------------------------
+
+    order.status = "cancelled";
+
+    await order.save();
+
+    // -----------------------------
+    // Response
+    // -----------------------------
+
+    return res.status(200).json({
+      message: "سفارش با موفقیت لغو شد",
+      order,
+    });
+  } catch (error) {
+    console.error("CANCEL ORDER ERROR:", error);
+
+    return res.status(500).json({
+      message: "خطا در لغو سفارش",
       error: error.message,
     });
   }
